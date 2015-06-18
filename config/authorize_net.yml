@@ -1,8 +1,0 @@
-default:
-  api_login_id: 8tL2Bt2m
-  api_transaction_key: 8htqb3NYz77HN88a
-  merchant_hash_value: iL2ZCxWnGyYEw2KmaBeV
-
-development: 
-test: 
-production: 
