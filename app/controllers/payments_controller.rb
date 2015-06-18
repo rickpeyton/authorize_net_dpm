@@ -4,47 +4,33 @@ class PaymentsController < ApplicationController
   helper :authorize_net
   protect_from_forgery :except => :relay_response
 
-  # Available transaction_type(s)
-    # AUTHORIZE_AND_CAPTURE = "AUTH_CAPTURE"
-    # AUTHORIZE_ONLY = "AUTH_ONLY"
-    # CAPTURE_ONLY = "CAPTURE_ONLY"
-    # CREDIT = "CREDIT"
-    # PRIOR_AUTHORIZATION_AND_CAPTURE = "PRIOR_AUTH_CAPTURE"
-    # VOID = "VOID"
-
-  # Test Card Numbers
-    # American Express Test Card 370000000000002
-    # Discover Test Card 6011000000000012
-    # JCB 3088000000000017
-    # Diners Club/ Carte Blanche 38000000000006
-    # MasterCard 5424000000000015
-    # Visa Test Card 4007000000027 or 4012888818888
-
   NGROK = "http://8a8be456.ngrok.io"
-
-  # GET
-  # Displays a payment form.
-  def payment
-    @amount = 10.00
-
-    @sim_transaction = AuthorizeNet::SIM::Transaction.new(
+  SIM_TRANSACTION = AuthorizeNet::SIM::Transaction.new(
       AUTHORIZE_NET_CONFIG['api_login_id'],
       AUTHORIZE_NET_CONFIG['api_transaction_key'],
       @amount, :relay_url => NGROK + "/payments/relay_response",
       :transaction_type => "AUTH_ONLY"
     )
+  AIM_CAPTURE = AuthorizeNet::AIM::Transaction.new(
+    AUTHORIZE_NET_CONFIG['api_login_id'],
+    AUTHORIZE_NET_CONFIG['api_transaction_key'],
+    :gateway => :sandbox
+  )
+
+  # GET # Displays a payment form.
+  def payment
+    @amount = 10.00
+    @sim_transaction = SIM_TRANSACTION
     @hidden_fields = hidden_fields
   end
 
-  # POST
-  # Returns relay response when Authorize.Net POSTs to us.
+  # POST # Returns relay response when Authorize.Net POSTs to us.
   def relay_response
     sim_response = AuthorizeNet::SIM::Response.new(params)
     if sim_response.success?(
       AUTHORIZE_NET_CONFIG['api_login_id'],
       AUTHORIZE_NET_CONFIG['merchant_hash_value']
     )
-
       OrderTransaction.create(
         action: "authorization",
         amount: sim_response.fields[:amount],
@@ -55,19 +41,13 @@ class PaymentsController < ApplicationController
         message: sim_response.fields[:response_reason_text]
       )
 
-      capture = AuthorizeNet::AIM::Transaction.new(
-        AUTHORIZE_NET_CONFIG['api_login_id'],
-        AUTHORIZE_NET_CONFIG['api_transaction_key'],
-        :gateway => :sandbox
-      )
-
+      capture = AIM_CAPTURE
       capture.prior_auth_capture(sim_response.transaction_id)
 
       render :text => sim_response.direct_post_reply(
         payments_receipt_url(:only_path => false),
         :include => true
       )
-
 
     else
 
@@ -82,11 +62,11 @@ class PaymentsController < ApplicationController
       )
 
       render
+
     end
   end
 
-  # GET
-  # Displays a receipt.
+  # GET # Displays a receipt.
   def receipt
     @auth_code = params[:x_auth_code]
   end
@@ -115,4 +95,19 @@ class PaymentsController < ApplicationController
     }
   end
 
+  # Available transaction_type(s)
+    # AUTHORIZE_AND_CAPTURE = "AUTH_CAPTURE"
+    # AUTHORIZE_ONLY = "AUTH_ONLY"
+    # CAPTURE_ONLY = "CAPTURE_ONLY"
+    # CREDIT = "CREDIT"
+    # PRIOR_AUTHORIZATION_AND_CAPTURE = "PRIOR_AUTH_CAPTURE"
+    # VOID = "VOID"
+
+  # Test Card Numbers
+    # American Express Test Card 370000000000002
+    # Discover Test Card 6011000000000012
+    # JCB 3088000000000017
+    # Diners Club/ Carte Blanche 38000000000006
+    # MasterCard 5424000000000015
+    # Visa Test Card 4007000000027 or 4012888818888
 end
