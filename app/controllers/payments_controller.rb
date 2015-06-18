@@ -40,6 +40,7 @@ class PaymentsController < ApplicationController
   # Returns relay response when Authorize.Net POSTs to us.
   def relay_response
     sim_response = AuthorizeNet::SIM::Response.new(params)
+    binding.pry
     if sim_response.success?(
       AUTHORIZE_NET_CONFIG['api_login_id'],
       AUTHORIZE_NET_CONFIG['merchant_hash_value']
