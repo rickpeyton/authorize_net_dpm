@@ -20,7 +20,7 @@ class PaymentsController < ApplicationController
     # MasterCard 5424000000000015
     # Visa Test Card 4007000000027 or 4012888818888
 
-  NGROK = "http://84df53b0.ngrok.io"
+  NGROK = "http://8a8be456.ngrok.io"
 
   # GET
   # Displays a payment form.
@@ -40,16 +40,36 @@ class PaymentsController < ApplicationController
   # Returns relay response when Authorize.Net POSTs to us.
   def relay_response
     sim_response = AuthorizeNet::SIM::Response.new(params)
-    binding.pry
     if sim_response.success?(
       AUTHORIZE_NET_CONFIG['api_login_id'],
       AUTHORIZE_NET_CONFIG['merchant_hash_value']
     )
+
+      OrderTransaction.create(
+        action: "authorization",
+        amount: sim_response.fields[:amount],
+        success: true,
+        authorization: sim_response.authorization_code,
+        params: params,
+        message: sim_response.fields[:response_reason_text]
+      )
+
       render :text => sim_response.direct_post_reply(
         payments_receipt_url(:only_path => false),
         :include => true
       )
+
     else
+
+      OrderTransaction.create(
+        action: "authorization",
+        amount: sim_response.fields[:amount],
+        success: false,
+        authorization: nil,
+        params: params,
+        message: sim_response.fields[:response_reason_text] + " CODE: " + sim_response.fields[:response_reason_code]
+      )
+
       render
     end
   end
