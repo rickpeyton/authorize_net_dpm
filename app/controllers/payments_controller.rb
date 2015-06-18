@@ -3,14 +3,7 @@ class PaymentsController < ApplicationController
   layout 'authorize_net'
   helper :authorize_net
   protect_from_forgery :except => :relay_response
-
   NGROK = "http://8a8be456.ngrok.io"
-  SIM_TRANSACTION = AuthorizeNet::SIM::Transaction.new(
-      AUTHORIZE_NET_CONFIG['api_login_id'],
-      AUTHORIZE_NET_CONFIG['api_transaction_key'],
-      @amount, :relay_url => NGROK + "/payments/relay_response",
-      :transaction_type => "AUTH_ONLY"
-    )
   AIM_CAPTURE = AuthorizeNet::AIM::Transaction.new(
     AUTHORIZE_NET_CONFIG['api_login_id'],
     AUTHORIZE_NET_CONFIG['api_transaction_key'],
@@ -20,7 +13,12 @@ class PaymentsController < ApplicationController
   # GET # Displays a payment form.
   def payment
     @amount = 10.00
-    @sim_transaction = SIM_TRANSACTION
+    @sim_transaction = AuthorizeNet::SIM::Transaction.new(
+      AUTHORIZE_NET_CONFIG['api_login_id'],
+      AUTHORIZE_NET_CONFIG['api_transaction_key'],
+      @amount, :relay_url => NGROK + "/payments/relay_response",
+      :transaction_type => "AUTH_ONLY"
+    )
     @hidden_fields = hidden_fields
   end
 
@@ -41,8 +39,6 @@ class PaymentsController < ApplicationController
         message: sim_response.fields[:response_reason_text]
       )
 
-      capture = AIM_CAPTURE
-      capture.prior_auth_capture(sim_response.transaction_id)
 
       render :text => sim_response.direct_post_reply(
         payments_receipt_url(:only_path => false),
@@ -69,6 +65,14 @@ class PaymentsController < ApplicationController
   # GET # Displays a receipt.
   def receipt
     @auth_code = params[:x_auth_code]
+  end
+
+  # GET # Pass in a purchase id
+  def capture
+    payment_to_capture = OrderTransaction.find(params[:id])
+    capture = AIM_CAPTURE
+    capture.prior_auth_capture(payment_to_capture.transaction_number)
+    render text: capture.response.success?
   end
 
   def hidden_fields
