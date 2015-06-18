@@ -50,14 +50,24 @@ class PaymentsController < ApplicationController
         amount: sim_response.fields[:amount],
         success: true,
         authorization: sim_response.authorization_code,
+        transaction_number: sim_response.transaction_id,
         params: params,
         message: sim_response.fields[:response_reason_text]
       )
+
+      capture = AuthorizeNet::AIM::Transaction.new(
+        AUTHORIZE_NET_CONFIG['api_login_id'],
+        AUTHORIZE_NET_CONFIG['api_transaction_key'],
+        :gateway => :sandbox
+      )
+
+      capture.prior_auth_capture(sim_response.transaction_id)
 
       render :text => sim_response.direct_post_reply(
         payments_receipt_url(:only_path => false),
         :include => true
       )
+
 
     else
 
@@ -66,6 +76,7 @@ class PaymentsController < ApplicationController
         amount: sim_response.fields[:amount],
         success: false,
         authorization: nil,
+        transaction_number: sim_response.transaction_id,
         params: params,
         message: sim_response.fields[:response_reason_text] + " CODE: " + sim_response.fields[:response_reason_code]
       )

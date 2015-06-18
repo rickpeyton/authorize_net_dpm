@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150618190859) do
+ActiveRecord::Schema.define(version: 20150618211813) do
 
   create_table "order_transactions", force: :cascade do |t|
     t.string  "action"
@@ -20,6 +20,7 @@ ActiveRecord::Schema.define(version: 20150618190859) do
     t.string  "authorization"
     t.text    "params"
     t.string  "message"
+    t.string  "transaction_number"
   end
 
 end
