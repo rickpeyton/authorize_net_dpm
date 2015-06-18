@@ -1,8 +1,13 @@
 <%= form_for :sim_transaction, :url => AuthorizeNet::SIM::Transaction::Gateway::TEST do |f| %>
   <%= sim_fields(@sim_transaction) %>
+  <% @hidden_fields.each do |hf| %>
+    <input type="hidden" name="<%= hf[0] %>" id="<%= hf[0] %>" value="<%= hf[1] %>">
+  <% end %>
   <%= label_tag 'x_amount', "Total: #{number_to_currency(@amount)}" %>
   <%= label_tag 'x_card_num', 'Credit Card Number'%>
   <%= text_field_tag 'x_card_num' %>
+  <%= label_tag 'x_card_code', 'Card Verification Number' %>
+  <%= text_field_tag 'x_card_code' %>
   <%= label_tag 'x_exp_date', 'Expiration Date (MMYY)'%>
   <%= text_field_tag 'x_exp_date' %>
   <br />
