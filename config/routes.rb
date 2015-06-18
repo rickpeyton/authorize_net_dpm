@@ -1,7 +1,14 @@
 Rails.application.routes.draw do
-  match '/payments/payment', :to => 'payments#payment', :as => 'paymentspayment', :via => [:get]
-  match '/payments/relay_response', :to => 'payments#relay_response', :as => 'payments_relay_response', :via => [:post]
-  match '/payments/receipt', :to => 'payments#receipt', :as => 'payments_receipt', :via => [:get]
+
+  match '/payments/payment', :to => 'payments#payment',
+    :as => 'paymentspayment', :via => [:get]
+
+  match '/payments/relay_response', :to => 'payments#relay_response',
+    :as => 'payments_relay_response', :via => [:post]
+
+  match '/payments/receipt', :to => 'payments#receipt',
+    :as => 'payments_receipt', :via => [:get]
+  #
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 
