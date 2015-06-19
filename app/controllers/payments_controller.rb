@@ -3,7 +3,7 @@ class PaymentsController < ApplicationController
   layout 'authorize_net'
   helper :authorize_net
   protect_from_forgery :except => :relay_response
-  NGROK = "http://8a8be456.ngrok.io"
+  NGROK = "http://5bc34b1d.ngrok.io"
   AIM_CAPTURE = AuthorizeNet::AIM::Transaction.new(
     AUTHORIZE_NET_CONFIG['api_login_id'],
     AUTHORIZE_NET_CONFIG['api_transaction_key'],
@@ -54,7 +54,7 @@ class PaymentsController < ApplicationController
         authorization: nil,
         transaction_number: sim_response.transaction_id,
         params: params,
-        message: sim_response.fields[:response_reason_text] + " CODE: " + sim_response.fields[:response_reason_code]
+        message: sim_response.fields[:response_reason_text]
       )
 
       render
@@ -72,7 +72,31 @@ class PaymentsController < ApplicationController
     payment_to_capture = OrderTransaction.find(params[:id])
     capture = AIM_CAPTURE
     capture.prior_auth_capture(payment_to_capture.transaction_number)
-    render text: capture.response.success?
+    OrderTransaction.create(
+      action: "capture",
+      amount: capture.response.fields[:amount],
+      success: capture.response.success?,
+      authorization: capture.response.fields[:authorization_code],
+      transaction_number: capture.response.fields[:transaction_id],
+      params: capture,
+      message: capture.response.fields[:response_reason_text]
+    )
+    render text: "#{capture.response.success?} #{capture.response.fields[:transaction_id]}"
+  end
+
+  def customer
+    ## Did not work. Response was 'This transaction type does not support
+    ## creating a customer profile'
+    #
+    @transaction = AuthorizeNet::API::Transaction.new(
+      AUTHORIZE_NET_CONFIG['api_login_id'],
+      AUTHORIZE_NET_CONFIG['api_transaction_key'],
+      :gateway => :sandbox
+    )
+    createProfReq = AuthorizeNet::API::CreateCustomerProfileFromTransactionRequest.new
+    createProfReq.transId = params[:trans_id]
+    createProfResp = @transaction.create_customer_profile_from_transaction(createProfReq)
+    render text: createProfResp.to_s
   end
 
   def hidden_fields

@@ -10,6 +10,7 @@ Rails.application.routes.draw do
     :as => 'payments_receipt', :via => [:get]
 
   get '/payments/capture', to: 'payments#capture'
+  get '/payments/customer', to: 'payments#customer'
   #
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
