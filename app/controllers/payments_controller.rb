@@ -99,6 +99,17 @@ class PaymentsController < ApplicationController
     render text: createProfResp.to_s
   end
 
+  def credit
+    binding.pry
+    payment_to_refund = OrderTransaction.find_by(transaction_number: params[:id])
+    last_four = payment_to_refund.params[:x_account_number][-4..-1]
+    gateway = AIM_CAPTURE
+    gateway.type = "CREDIT"
+    some_response = gateway.refund(payment_to_refund.amount,
+                                   payment_to_refund.transaction_number,
+                                   last_four)
+  end
+
   def hidden_fields
     {
       x_invoice_num: "ORDER_NUMBER",

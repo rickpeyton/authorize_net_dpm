@@ -11,6 +11,7 @@ Rails.application.routes.draw do
 
   get '/payments/capture', to: 'payments#capture'
   get '/payments/customer', to: 'payments#customer'
+  get '/payments/credit', to: 'payments#credit'
   #
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
